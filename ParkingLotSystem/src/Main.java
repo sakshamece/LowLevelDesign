@@ -1,37 +1,109 @@
+import java.util.Scanner;
+
 public class Main {
+
     public static void main(String[] args) {
-        System.out.println("Hello world!");
+        // Initialize the ParkingLot with 3 floors, 5 rows per floor, and 10 spots per row
+        ParkingLot parkingLot = new ParkingLot(3, 5, 10);
+        Scanner scanner = new Scanner(System.in);
 
-        ParkingLot parkingLot = new ParkingLot(3, 10, 20);
-        Car car1 = new Car("CC1234");
-        Car car2 = new Car("CC3456");
-        Bike bike1 = new Bike("BB0011");
-        Truck tr1 = new Truck("TR9879");
+        while (true) {
+            System.out.println("\nParking Lot Management System");
+            System.out.println("1. Park Vehicle");
+            System.out.println("2. Remove Vehicle");
+            System.out.println("3. Check Available Spots");
+            System.out.println("4. Clear Parking Lot");
+            System.out.println("5. Exit");
+            System.out.print("Select an option: ");
 
-        System.out.println("Available spots before on floor 0: " + parkingLot.availableSpots(0));
-        car1.setParkedTime();
-        parkingLot.park(car1, 0, 0);
-        System.out.println("Available spots after on floor 0: " + parkingLot.availableSpots(0));
+            int choice = scanner.nextInt();
+            scanner.nextLine();  // Consume newline
 
-        System.out.println("Available spots before on floor 0: " + parkingLot.availableSpots(0));
-        car2.setParkedTime();
-        parkingLot.park(car2, 0, 0);
-        System.out.println("Available spots after on floor 0: " + parkingLot.availableSpots(0));
+            switch (choice) {
+                case 1:
+                    System.out.print("Enter vehicle number plate: ");
+                    String numberPlate = scanner.nextLine();
+                    System.out.print("Enter vehicle type (bike, car, truck): ");
+                    String typeString = scanner.nextLine().toLowerCase();
+                    Vehicle vehicle = null;
 
-        System.out.println("Available spots before on floor 1: " + parkingLot.availableSpots(1));
-        bike1.setParkedTime();
-        parkingLot.park(bike1, 1, 0);
-        System.out.println("Available spots after on floor 1: " + parkingLot.availableSpots(1));
+                    switch (typeString) {
+                        case "bike":
+                            vehicle = new Bike(numberPlate);
+                            break;
+                        case "car":
+                            vehicle = new Car(numberPlate);
+                            break;
+                        case "truck":
+                            vehicle = new Truck(numberPlate);
+                            break;
+                        default:
+                            System.out.println("Invalid vehicle type.");
+                            continue;
+                    }
 
-        System.out.println("Available spots before on floor 2: " + parkingLot.availableSpots(2));
-        tr1.setParkedTime();
-        parkingLot.park(tr1, 2, 9);
-        System.out.println("Available spots after on floor 2: " + parkingLot.availableSpots(2));
+                    System.out.print("Enter floor number (0-2): ");
+                    int floor = scanner.nextInt();
+                    System.out.print("Enter row number (0-4): ");
+                    int row = scanner.nextInt();
 
-        parkingLot.leave(car1);
-        System.out.println("Available spots after car1 left from floor 0: " + parkingLot.availableSpots(0));
-        parkingLot.leave(bike1);
-        System.out.println("Available spots after bike1 left from floor 1: " + parkingLot.availableSpots(1));
-        parkingLot.clear();
+                    if (parkingLot.park(vehicle, floor, row)) {
+                        System.out.println("Vehicle parked successfully.");
+                    } else {
+                        System.out.println("Parking failed. Please try again.");
+                    }
+                    break;
+
+                case 2:
+                    System.out.print("Enter vehicle number plate: ");
+                    String numberPlateToLeave = scanner.nextLine();
+                    System.out.print("Enter vehicle type (bike, car, truck): ");
+                    String typeToLeave = scanner.nextLine().toLowerCase();
+                    Vehicle vehicleToLeave = null;
+
+                    switch (typeToLeave) {
+                        case "bike":
+                            vehicleToLeave = new Bike(numberPlateToLeave);
+                            break;
+                        case "car":
+                            vehicleToLeave = new Car(numberPlateToLeave);
+                            break;
+                        case "truck":
+                            vehicleToLeave = new Truck(numberPlateToLeave);
+                            break;
+                        default:
+                            System.out.println("Invalid vehicle type.");
+                            continue;
+                    }
+
+                    if (parkingLot.leave(vehicleToLeave)) {
+                        System.out.println("Vehicle removed successfully.");
+                    } else {
+                        System.out.println("Vehicle not found.");
+                    }
+                    break;
+
+                case 3:
+                    System.out.print("Enter floor number to check available spots (0-2): ");
+                    int floorToCheck = scanner.nextInt();
+                    int availableSpots = parkingLot.availableSpots(floorToCheck);
+                    System.out.println("Available spots on floor " + floorToCheck + ": " + availableSpots);
+                    break;
+
+                case 4:
+                    parkingLot.clear();
+                    System.out.println("Parking lot cleared.");
+                    break;
+
+                case 5:
+                    System.out.println("Exiting the system. Goodbye!");
+                    scanner.close();
+                    return;
+
+                default:
+                    System.out.println("Invalid option. Please try again.");
+                    break;
+            }
+        }
     }
 }
