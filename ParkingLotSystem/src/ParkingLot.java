@@ -1,13 +1,8 @@
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 class ParkingLot {
-    private final Map<Integer, Map<Integer, Map<String, Vehicle>>> floors;
+    private final List<List<Map<String, Vehicle>>> floors;
     private final int totalFloors;
     private final int rows;
     private final int spotsPerRow;
@@ -16,107 +11,103 @@ class ParkingLot {
         this.totalFloors = totalFloors;
         this.rows = rows;
         this.spotsPerRow = spotsPerRow;
-        this.floors = new HashMap<>();
+        this.floors = new ArrayList<>();
         for (int i = 0; i < totalFloors; i++) {
-            this.floors.put(i, new HashMap<>());
+            List<Map<String, Vehicle>> floor = new ArrayList<>();
+            for (int j = 0; j < rows; j++) {
+                floor.add(new HashMap<>());
+            }
+            floors.add(floor);
         }
     }
 
     public boolean park(Vehicle vehicle, int floor, int row) {
-        if (isValidFloor(floor)) {
-            Map<Integer, Map<String, Vehicle>> floorMap = getFloorMap(floor);
-            if (floorMap.computeIfAbsent(row, k -> new HashMap<>()).size() < spotsPerRow) {
-                String numberPlate = vehicle.getNumberPlate();
-                floorMap.get(row).put(numberPlate, vehicle);
-                System.out.println(vehicle.getType() + " parked successfully at floor " + floor + ", row " + row + ".");
-                return true;
-            } else {
-                System.out.println("This floor row is already full. Please select another row on floor " + floor + ".");
-                return false;
-            }
+        if (isValidFloor(floor) || !isValidRow(row)) {
+            System.out.println("Invalid floor or row. Please select a valid floor and row.");
+            return false;
+        }
+
+        Map<String, Vehicle> rowMap = floors.get(floor).get(row);
+        if (rowMap.size() < spotsPerRow) {
+            rowMap.put(vehicle.getNumberPlate(), vehicle);
+            System.out.println(vehicle.getType() + " parked successfully at floor " + floor + ", row " + row + ".");
+            return true;
         } else {
-            System.out.println("Invalid floor. Please select a valid floor.");
+            System.out.println("This row is already full. Please select another row on floor " + floor + ".");
             return false;
         }
     }
 
     public boolean leave(Vehicle vehicle) {
         FloorRowPair pair = findVehicleLocation(vehicle);
-        if (pair != null) {
-            Vehicle ownerVehicle = pair.floorMap.get(pair.row).remove(vehicle.getNumberPlate());
-            double hours = calculateParkingHours(ownerVehicle);
-            double cost = ownerVehicle.calculateCost(hours);
-            System.out.println(vehicle.getType() + " left successfully from floor " + pair.floor + ". Total cost: " + cost);
-            return true;
-        } else {
+        if (pair == null) {
             System.out.println(vehicle.getType() + " not found.");
             return false;
         }
+
+        pair.rowMap.remove(vehicle.getNumberPlate());
+        double hours = calculateParkingHours(vehicle);
+        double cost = vehicle.calculateCost(hours);
+        System.out.println(vehicle.getType() + " left successfully from floor " + pair.floor + ". Total cost: " + cost);
+        return true;
     }
 
     private FloorRowPair findVehicleLocation(Vehicle vehicle) {
         for (int i = 0; i < totalFloors; i++) {
-            Map<Integer, Map<String, Vehicle>> floorMap = floors.get(i);
-            if (floorMap != null) {
-                for (int j = 0; j < rows; j++) {
-                    Map<String, Vehicle> rowMap = floorMap.get(j);
-                    if (rowMap != null && rowMap.containsKey(vehicle.getNumberPlate())) {
-                        return new FloorRowPair(i, j, floorMap);
-                    }
+            for (int j = 0; j < rows; j++) {
+                Map<String, Vehicle> rowMap = floors.get(i).get(j);
+                if (rowMap.containsKey(vehicle.getNumberPlate())) {
+                    return new FloorRowPair(i, j, rowMap);
                 }
             }
         }
         return null;
     }
 
-    public double calculateParkingHours(Vehicle vehicle) {
-        FloorRowPair pair = findVehicleLocation(vehicle);
-        if (pair != null) {
-            Vehicle ownerVehicle = pair.floorMap.get(pair.row).get(vehicle.getNumberPlate());
-            long currentTime = System.currentTimeMillis();
-            long parkTime = ownerVehicle.getParkTime();
-            long duration = currentTime - parkTime;
-            return TimeUnit.MILLISECONDS.toHours(duration);
-        }
-        return 0;
+    public long calculateParkingHours(Vehicle vehicle) {
+        long currentTime = System.currentTimeMillis();
+        long parkTime = vehicle.getParkTime();
+        long duration = currentTime - parkTime;
+
+        // Convert duration to hours and return the ceiling value
+        return (long) Math.ceil((double) duration / (1000 * 60 * 60));
     }
 
+
     public int availableSpots(int floor) {
-        int count = 0;
-        Map<Integer, Map<String, Vehicle>> floorMap = floors.get(floor);
-        if (floorMap != null) {
-            for (int r = 0; r < rows; r++) {
-                Map<String, Vehicle> rowMap = floorMap.get(r);
-                count += (rowMap == null ? spotsPerRow : spotsPerRow - rowMap.size());
-            }
+        if (isValidFloor(floor)) {
+            return 0;
         }
-        return count;
+        return floors.get(floor).stream()
+                .mapToInt(row -> spotsPerRow - row.size())
+                .sum();
     }
 
     public void clear() {
-        for (int i = 0; i < totalFloors; i++) {
-            getFloorMap(i).clear();
+        for (List<Map<String, Vehicle>> floor : floors) {
+            for (Map<String, Vehicle> row : floor) {
+                row.clear();
+            }
         }
     }
 
     private boolean isValidFloor(int floor) {
-        return floor >= 0 && floor < totalFloors;
+        return floor < 0 || floor >= totalFloors;
     }
 
-    private Map<Integer, Map<String, Vehicle>> getFloorMap(int floor) {
-        return floors.computeIfAbsent(floor, k -> new HashMap<>());
+    private boolean isValidRow(int row) {
+        return row >= 0 && row < rows;
     }
 
     private static class FloorRowPair {
         final int floor;
         final int row;
-        final Map<Integer, Map<String, Vehicle>> floorMap;
+        final Map<String, Vehicle> rowMap;
 
-        FloorRowPair(int floor, int row, Map<Integer, Map<String, Vehicle>> floorMap) {
+        FloorRowPair(int floor, int row, Map<String, Vehicle> rowMap) {
             this.floor = floor;
             this.row = row;
-            this.floorMap = floorMap;
+            this.rowMap = rowMap;
         }
     }
 }
-
