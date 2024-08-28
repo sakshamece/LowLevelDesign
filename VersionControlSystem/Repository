@@ -1,0 +1,52 @@
+import java.util.HashMap;
+import java.util.Map;
+
+class Repository {
+    private final Map<String, Branch> branches;
+
+    public Repository() {
+        this.branches = new HashMap<>();
+    }
+
+    public void createBranch(String name) {
+        if (branches.containsKey(name)) {
+            System.out.println("Branch " + name + " already exists.");
+        } else {
+            branches.put(name, new Branch(name));
+            System.out.println("Branch " + name + " created.");
+        }
+    }
+
+    public void commit(String branchName, Commit commit) {
+        Branch branch = getBranch(branchName);
+        if (branch != null) {
+            branch.addCommit(commit);
+            System.out.println("Committed to branch " + branchName + ": " + commit.getMessage());
+        }
+    }
+
+    public void merge(String sourceBranchName, String targetBranchName) {
+        Branch sourceBranch = getBranch(sourceBranchName);
+        Branch targetBranch = getBranch(targetBranchName);
+
+        if (sourceBranch != null && targetBranch != null) {
+            Commit sourceHead = sourceBranch.getHead();
+            Commit targetHead = targetBranch.getHead();
+
+            if (targetHead != null && !targetHead.equals(sourceHead)) {
+                System.out.println("Merging could result in conflicts.");
+            } else {
+                targetBranch.addCommit(sourceHead);
+                System.out.println("Merged " + sourceBranchName + " into " + targetBranchName);
+            }
+        }
+    }
+
+    private Branch getBranch(String branchName) {
+        Branch branch = branches.get(branchName);
+        if (branch == null) {
+            System.out.println("Branch " + branchName + " does not exist.");
+        }
+        return branch;
+    }
+}

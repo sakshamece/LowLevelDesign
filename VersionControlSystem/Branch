@@ -1,0 +1,28 @@
+import java.util.ArrayList;
+import java.util.List;
+
+class Branch {
+    private final String name;
+    private final List<Commit> commits;
+
+    public Branch(String name) {
+        this.name = name;
+        this.commits = new ArrayList<>();
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void addCommit(Commit commit) {
+        commits.add(commit);
+    }
+
+    public Commit getHead() {
+        return commits.isEmpty() ? null : commits.get(commits.size() - 1);
+    }
+
+    public List<Commit> getCommits() {
+        return commits;
+    }
+}
