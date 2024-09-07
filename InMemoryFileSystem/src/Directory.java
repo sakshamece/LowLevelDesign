@@ -1,42 +1,97 @@
 import java.util.ArrayList;
 import java.util.List;
 
-public class Directory implements FileSystem {
+public class Directory implements FileSystemComponent {
+    private String name;
+    private final List<FileSystemComponent> components;
 
-    String directoryName;
-    List<FileSystem> fileSystemList;
-
-    public Directory(String directoryName) {
-        this.directoryName = directoryName;
-        fileSystemList = new ArrayList<>();
+    public Directory(String name) {
+        this.name = name;
+        this.components = new ArrayList<>();
     }
 
-    public void ls() {
-        System.out.println("Directory Name: " + directoryName);
+    @Override
+    public String getName() {
+        return name;
+    }
 
-        for (FileSystem fileSystem : fileSystemList) {
-            fileSystem.ls();
+    @Override
+    public void rename(String newName) {
+        this.name = newName;
+    }
+
+    @Override
+    public void delete() {
+        for (FileSystemComponent component : components) {
+            component.delete();
+        }
+        components.clear();
+        System.out.println("Deleting directory: " + name);
+    }
+
+    @Override
+    public void display(String indent) {
+        System.out.println(indent + "Directory: " + name);
+        for (FileSystemComponent component : components) {
+            component.display(indent + "  ");
         }
     }
 
-    public void add(FileSystem fileSystem) {
-        fileSystemList.add(fileSystem);
+    @Override
+    public void add(FileSystemComponent component) {
+        components.add(component);
     }
 
-    public boolean delete() {
-        // Implement directory deletion logic
-        System.out.println("Deleting directory: " + directoryName);
-        return true; // Assuming deletion is successful
+    @Override
+    public void remove(FileSystemComponent component) {
+        components.remove(component);
     }
 
-    public FileSystem copy(String newName) {
-        // Implement directory copying logic
-        System.out.println("Copying directory: " + directoryName + " to " + newName);
-        Directory newDirectory = new Directory(newName);
-        for (FileSystem fileSystem : fileSystemList) {
-            newDirectory.add(fileSystem.copy(fileSystem instanceof File ?
-                    ((File) fileSystem).fileName : "NewFile"));
+    @Override
+    public List<FileSystemComponent> getChildren() {
+        return components;
+    }
+
+    @Override
+    public String read() {
+        throw new UnsupportedOperationException("Cannot read a directory.");
+    }
+
+    @Override
+    public void write(String content) {
+        throw new UnsupportedOperationException("Cannot write to a directory.");
+    }
+
+    @Override
+    public FileSystemComponent search(String name) {
+        if (this.name.equals(name)) {
+            return this;
         }
-        return newDirectory;
+        for (FileSystemComponent component : components) {
+            FileSystemComponent result = component.search(name);
+            if (result != null) {
+                return result;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public void copyTo(FileSystemComponent destination) {
+        if (destination instanceof Directory) {
+            Directory copy = new Directory(this.name);
+            for (FileSystemComponent component : components) {
+                component.copyTo(copy);
+            }
+            destination.add(copy);
+        } else {
+            throw new UnsupportedOperationException("Cannot copy directory to non-directory.");
+        }
+    }
+
+    @Override
+    public void moveTo(FileSystemComponent destination) {
+        this.copyTo(destination);
+        this.delete();
     }
 }
