@@ -1,24 +1,79 @@
-public class File implements FileSystem {
+import java.util.List;
 
-    String fileName;
+public class File implements FileSystemComponent {
+    private String name;
+    private String content;
 
-    public File(String fileName) {
-        this.fileName = fileName;
+    public File(String name) {
+        this.name = name;
+        this.content = "";
     }
 
-    public void ls() {
-        System.out.println("File Name: " + fileName);
+    @Override
+    public String getName() {
+        return name;
     }
 
-    public boolean delete() {
-        // Implement file deletion logic
-        System.out.println("Deleting file: " + fileName);
-        return true; // Assuming deletion is successful
+    @Override
+    public void rename(String newName) {
+        this.name = newName;
     }
 
-    public FileSystem copy(String newName) {
-        // Implement file copying logic
-        System.out.println("Copying file: " + fileName + " to " + newName);
-        return new File(newName);
+    @Override
+    public void delete() {
+        // Code to delete the file from the file system
+        System.out.println("Deleting file: " + name);
+    }
+
+    @Override
+    public void display(String indent) {
+        System.out.println(indent + "File: " + name);
+    }
+
+    @Override
+    public void add(FileSystemComponent component) {
+        throw new UnsupportedOperationException("Cannot add to a file.");
+    }
+
+    @Override
+    public void remove(FileSystemComponent component) {
+        throw new UnsupportedOperationException("Cannot remove from a file.");
+    }
+
+    @Override
+    public List<FileSystemComponent> getChildren() {
+        throw new UnsupportedOperationException("File does not have children.");
+    }
+
+    @Override
+    public String read() {
+        return content;
+    }
+
+    @Override
+    public void write(String content) {
+        this.content = content;
+    }
+
+    @Override
+    public FileSystemComponent search(String name) {
+        return this.name.equals(name) ? this : null;
+    }
+
+    @Override
+    public void copyTo(FileSystemComponent destination) {
+        if (destination != null) {
+            File copy = new File(this.name);
+            copy.write(this.content);
+            destination.add(copy);
+        } else {
+            throw new UnsupportedOperationException("Cannot copy file to non-directory.");
+        }
+    }
+
+    @Override
+    public void moveTo(FileSystemComponent destination) {
+        this.copyTo(destination);
+        this.delete();
     }
 }
