@@ -1,10 +1,13 @@
 package models;
 
-public class PlayingPiece {
-
+public abstract class PlayingPiece {
     public PieceType pieceType;
 
-    PlayingPiece(PieceType pieceType) {
+    public PlayingPiece(PieceType pieceType) {
         this.pieceType = pieceType;
+    }
+
+    public PieceType getPieceType() {
+        return pieceType;
     }
 }
